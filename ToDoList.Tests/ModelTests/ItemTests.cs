@@ -69,7 +69,7 @@ namespace ToDoList.Tests
       string description01 = "Walk the dog";
       string description02 = "wash the dishes";
       Item newItem1 = new Item(description01);
-      Item newItem2 = new Item("description02");
+      Item newItem2 = new Item(description02);
       Item result = Item.Find(2);
       Assert.AreEqual(newItem2, result);
     }
