@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Extensions.Configuration;
 using ToDoList.Models;
 using System.Collections.Generic;
 using System;
@@ -8,9 +9,33 @@ namespace ToDoList.Tests
   [TestClass]
   public class ItemTests : IDisposable
   {
+    public IConfiguration Configuration { get; set; }
+
     public void Dispose()
     {
       Item.ClearAll();
+    }
+
+    public ItemTests()
+    {
+      IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
+      Configuration = builder.Build();
+      DBConfiguration.ConnectionString = Configuration["ConnectionStrings:TestConnection"];
+    }
+
+    [TestMethod]
+    public void Save_SavesToDatabase_ItemList()
+    {
+      //Arrange
+      Item testItem = new Item("Mow the lawn");
+
+      //Act
+      testItem.Save();
+      List<Item> result = Item.GetAll();
+      List<Item> testList = new List<Item>{testItem};
+
+      //Assert
+      CollectionAssert.AreEqual(testList, result);
     }
 
     [TestMethod]
@@ -42,24 +67,38 @@ namespace ToDoList.Tests
       //Assert
       Assert.AreEqual(updatedDescription, result);
     }
-    [TestMethod]
-    public void GetAll_ReturnsEmptyList_ItemList()
-    {
+     [TestMethod]
+     public void GetAll_ReturnsEmptyList_ItemList()
+     {
+      //Arrange
       List<Item> newList = new List<Item> { };
+
+      //Act
       List<Item> result = Item.GetAll();
+
+      //Assert
       CollectionAssert.AreEqual(newList, result);
-    }
+      }
+
     [TestMethod]
     public void GetAll_ReturnsItems_ItemList()
     {
+      //Arrange
       string description01 = "Walk the dog";
       string description02 = "Wash the dishes";
       Item newItem1 = new Item(description01);
+      newItem1.Save();
       Item newItem2 = new Item(description02);
+      newItem2.Save();
       List<Item> newList = new List<Item> { newItem1, newItem2 };
+
+      //Act
       List<Item> result = Item.GetAll();
+
+      //Assert
       CollectionAssert.AreEqual(newList, result);
     }
+
     [TestMethod]
     public void GetId_ItemsInstantiateWithAnIdAndGetterReturns_Int()
     {
@@ -69,14 +108,19 @@ namespace ToDoList.Tests
       Assert.AreEqual(1, result);
     }
     [TestMethod]
-    public void Find_ReturnsCorrectItem_Item()
+    public void Find_ReturnsCorrectItemFromDatabase_Item()
     {
-      string description01 = "Walk the dog";
-      string description02 = "wash the dishes";
-      Item newItem1 = new Item(description01);
-      Item newItem2 = new Item(description02);
-      Item result = Item.Find(2);
-      Assert.AreEqual(newItem2, result);
+      //Arrange
+      Item newItem1 = new Item("Mow the lawn");
+      newItem1.Save();
+      Item newItem2 = new Item("Wash the dishes");
+      newItem2.Save();
+
+      //Act
+      Item foundItem = Item.Find(newItem1.Id);
+
+      //Assert
+      Assert.AreEqual(newItem1, foundItem);
     }
   }
 }
